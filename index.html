@@ -101,33 +101,31 @@
 
             if (!message) return;
 
+            // Add the user's message to the chat
             addMessage("You: " + message, "user");
             input.value = "";
 
             try {
+                // Show "Bot is typing..." while waiting for the response
                 addMessage("Bot is typing...", "bot");
 
-                const response = await fetch(
-                    "https://devhrsh-project-mansik-santulan.hf.space/run/predict",
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            data: [message],
-                        }),
-                    }
-                );
+                // Make a request to the Netlify function, which will proxy the request to the Gradio backend
+                const response = await fetch('/.netlify/functions/proxy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
 
                 const result = await response.json();
 
-                // Gradio returns response in result.data[0]
-                const botReply = result?.data?.[0] || "No response received";
+                // Assuming the Netlify function returns the backend response in result.response
+                const botReply = result?.response || "No response received";
 
+                // Add the bot's response to the chat
                 addMessage("Bot: " + botReply, "bot");
 
             } catch (error) {
+                // Handle any errors during the request
                 addMessage("Bot: Error connecting to the server.", "bot");
             }
         }
